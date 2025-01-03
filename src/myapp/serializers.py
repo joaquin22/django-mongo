@@ -8,11 +8,14 @@ class BookSerializer(serializers.Serializer):
     published_date = serializers.DateTimeField()
     genre = serializers.CharField()
     price = serializers.FloatField()
+    year = serializers.IntegerField(read_only=True)
 
     def create(self, validated_data):
         from .models import Book
 
-        book = Book(**validated_data)
+        year = validated_data["published_date"].year
+        print(year)
+        book = Book(**validated_data, year=year)
         book.save()
         return book
 

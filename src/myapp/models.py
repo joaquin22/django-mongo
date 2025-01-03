@@ -11,6 +11,7 @@ class Book(BaseModel):
         published_date=None,
         genre=None,
         price=None,
+        year=None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -19,6 +20,7 @@ class Book(BaseModel):
         self.published_date = published_date
         self.genre = genre
         self.price = price
+        self.year = year
 
     def __str__(self):
         return f"{self.title} by {self.author}"

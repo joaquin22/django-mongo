@@ -33,6 +33,7 @@ class BaseModel:
         """Finds documents based on a query."""
         query = query or {}
         collection = cls.get_collection()
+        print(query)
         results = collection.find(query)
         return [cls(**doc) for doc in results]
 

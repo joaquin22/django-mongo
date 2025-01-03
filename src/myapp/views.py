@@ -1,26 +1,57 @@
+from datetime import datetime
+
 from bson.objectid import ObjectId
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.viewsets import ViewSet
+from rest_framework.decorators import action
+
 
 from .models import Book
 from .serializers import BookSerializer
 
 
-class BookAPIView(APIView):
+class BookAPIView(ViewSet):
 
-    def get(self, request):
+    def list(self, request, *args, **kwargs):
         books = Book.find()
         serializer = BookSerializer(books, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def post(self, request):
+    def create(self, request, *args, **kwargs):
         serializer = BookSerializer(data=request.data)
         if serializer.is_valid():
             book = serializer.save()
-            return Response({"id": str(book._id)}, status=status.HTTP_201_CREATED)
+            return Response({"_id": str(book._id)}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["get"], url_path="year/(?P<year>\\d{4})")
+    def year(self, request, year):
+
+        book_collection = Book.get_collection()
+
+        pipeline = [
+            {
+                "$match": {
+                    "published_date": {
+                        "$gte": datetime(int(year), 1, 1),
+                        "$lt": datetime(int(year) + 1, 1, 1),
+                    }
+                }
+            },
+            {"$group": {"_id": None, "avg_price": {"$avg": "$price"}}},
+        ]
+        result = list(book_collection.aggregate(pipeline))
+        if not result:
+            return Response(
+                {"error": "No books found for the year"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(
+            {"avg_price": result[0]["avg_price"]}, status=status.HTTP_200_OK
+        )
 
 
 class BookDetailAPIView(APIView):
